@@ -15,7 +15,7 @@
 
 ## How to use this
 
-- Put your GitHub token in a file called `key.local` in the root of this project
+- Put [your GitHub token](https://github.com/settings/tokens) in a file called `key.local` in the root of this project
 - Run the main function from `Routing.kt`
 - Or use the webinterface: `http://0.0.0.0:8080/zip/repo?user=JetBrains&name=compose-multiplatform&branch=master&path=/`
 
