@@ -41,4 +41,5 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages:$ktor_version")
     implementation("io.ktor:ktor-server-html-builder:$ktor_version")
     implementation("io.ktor:ktor-server-resources:$ktor_version")
+    implementation("org.apache.commons:commons-compress:1.25.0")
 }

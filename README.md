@@ -8,3 +8,7 @@
 
 - Use GitHub API to retrieve individual files from subdirectory
 - Use Java's Standard Library Magic™ to zip them up and serve them at an endpoint
+
+## Important characteristics
+- Preserve file permissions (e.g. `gradlew` will remain executable)
+- Support for branch names with slashes
