@@ -6,7 +6,6 @@ import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
-import io.ktor.http.*
 import io.ktor.resources.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -14,8 +13,18 @@ import io.ktor.server.resources.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.routing.get
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
+import org.slf4j.helpers.CheckReturnValue
 import java.io.File
+import java.io.FileOutputStream
 import java.util.*
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 
 private val Tree.isDirectory: Boolean
@@ -66,22 +75,21 @@ suspend fun listFiles(repo: RepoPath): FileListResponse {
 
 data class PathWithUrl(val path: String, val url: String)
 
-suspend fun listAllFiles(repo: RepoPath): List<PathWithUrl> {
-    val foo = buildList {
+fun listAllFiles(repo: RepoPath): Flow<PathWithUrl> {
+    val foo = flow {
         suspend fun walk(currDir: String) {
-            for (treeNode in listFiles(repo.copy(path = repo.path + currDir)).tree) {
+            for (treeNode in listFiles(repo.copy(path = repo.path + currDir)).tree.sortedBy { it.isDirectory }) {
                 println("Looking at ${repo.path} / $currDir / ${treeNode.path} (${treeNode.type})")
                 if (treeNode.isDirectory) {
                     walk(currDir + "/" + treeNode.path)
                 } else {
                     // file
-                    add(PathWithUrl(currDir + treeNode.path, treeNode.url))
+                    emit(PathWithUrl(currDir + "/" + treeNode.path, treeNode.url))
                 }
             }
         }
         walk("")
     }
-    println(foo)
     return foo
 }
 
@@ -102,14 +110,6 @@ fun Application.configureRouting() {
             call.respondText("Hello World!")
         }
         route("zip") {
-//            get("/{id...}") {
-//                // https://github.com/SebastianAigner/twemoji-amazing/tree/renovate/gradle-8.x/src/main/kotlin
-//                // zip/Seb/repo/folder
-//                // [Seb, repo, folder]
-//                val repoPath = call.parameters.getAll("id") ?: error("Provide")
-//                val x = myClient.get("https://jsonplaceholder.typicode.com/todos/1").body<String>()
-//                call.respondText(listFiles(repoPath).toString())
-//            }
             get<RepoPath> { repoPath ->
                 call.respondText(listAllFiles(repoPath).toString())
             }
@@ -117,11 +117,50 @@ fun Application.configureRouting() {
     }
 }
 
+data class PathAndFileContents(val path: String, val byteArray: ByteArray)
+
 suspend fun main() {
-//    val allFiles = listAllFiles(
-//        RepoPath("JetBrains", "compose-multiplatform", "master", "/examples/imageviewer")
-//    )
-//    println(allFiles.joinToString("\n"))
-//    println(allFiles.size)
-    downloadFile("https://api.github.com/repos/JetBrains/compose-multiplatform/git/blobs/c3bdd530d66b9ed19c5270fa390df26ced44eca5")
+    val allFiles = listAllFiles(
+        RepoPath("JetBrains", "compose-multiplatform", "master", "/examples/imageviewer")
+    )
+
+    sequenceOf("a", "b", "c")
+    val otherString = "aString"
+    val areEqual = "aString" === otherString
+    println(areEqual)
+
+    val allDownloadedFiles = channelFlow {
+        val sem = Semaphore(20)
+        allFiles.collect {
+            launch {
+                sem.withPermit {
+                    send(PathAndFileContents(it.path, downloadFile(it.url)))
+                }
+            }
+        }
+    }
+
+    val mutex = Mutex()
+    ZipOutputStream(FileOutputStream("output.zip")).use { zipOutputStream ->
+        coroutineScope {
+            allDownloadedFiles
+                .onEach { (path, byteArray) ->
+                    println("File $path is downloaded")
+                    launch {
+                        mutex.withLock {
+                            zipOutputStream.putInZip(path, byteArray)
+                        }
+                    }
+                }
+                .flowOn(Dispatchers.IO)
+                .collect()
+        }
+    }
+}
+
+fun ZipOutputStream.putInZip(path: String, byteArray: ByteArray) {
+    val entry = ZipEntry(path)
+    putNextEntry(entry)
+    write(byteArray)
+    closeEntry()
 }
