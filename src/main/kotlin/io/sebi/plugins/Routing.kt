@@ -23,8 +23,11 @@ import org.slf4j.helpers.CheckReturnValue
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.system.measureTimeMillis
+import kotlin.time.measureTime
 
 
 private val Tree.isDirectory: Boolean
@@ -48,7 +51,7 @@ val myClient = HttpClient {
     }
 }
 
-val urlToFileListResponse = mutableMapOf<String, FileListResponse>()
+val urlToFileListResponse = ConcurrentHashMap<String, FileListResponse>()
 
 suspend fun getFileListResponse(url: String): FileListResponse {
     return urlToFileListResponse.getOrPut(url) {
@@ -76,15 +79,22 @@ suspend fun listFiles(repo: RepoPath): FileListResponse {
 data class PathWithUrl(val path: String, val url: String)
 
 fun listAllFiles(repo: RepoPath): Flow<PathWithUrl> {
-    val foo = flow {
+    val foo = channelFlow {
+        val sem = Semaphore(10)
         suspend fun walk(currDir: String) {
             for (treeNode in listFiles(repo.copy(path = repo.path + currDir)).tree.sortedBy { it.isDirectory }) {
                 println("Looking at ${repo.path} / $currDir / ${treeNode.path} (${treeNode.type})")
                 if (treeNode.isDirectory) {
-                    walk(currDir + "/" + treeNode.path)
+                    launch {
+                        sem.withPermit {
+                            walk(currDir + "/" + treeNode.path)
+                        }
+                    }
                 } else {
                     // file
-                    emit(PathWithUrl(currDir + "/" + treeNode.path, treeNode.url))
+                    launch {
+                        send(PathWithUrl(currDir + "/" + treeNode.path, treeNode.url))
+                    }
                 }
             }
         }
@@ -120,42 +130,40 @@ fun Application.configureRouting() {
 data class PathAndFileContents(val path: String, val byteArray: ByteArray)
 
 suspend fun main() {
-    val allFiles = listAllFiles(
-        RepoPath("JetBrains", "compose-multiplatform", "master", "/examples/imageviewer")
-    )
+    val time = measureTime {
+        val allFiles = listAllFiles(
+            RepoPath("JetBrains", "compose-multiplatform", "master", "/examples/imageviewer")
+        )
 
-    sequenceOf("a", "b", "c")
-    val otherString = "aString"
-    val areEqual = "aString" === otherString
-    println(areEqual)
-
-    val allDownloadedFiles = channelFlow {
-        val sem = Semaphore(20)
-        allFiles.collect {
-            launch {
-                sem.withPermit {
-                    send(PathAndFileContents(it.path, downloadFile(it.url)))
+        val allDownloadedFiles = channelFlow {
+            val sem = Semaphore(20)
+            allFiles.collect {
+                launch {
+                    sem.withPermit {
+                        send(PathAndFileContents(it.path, downloadFile(it.url)))
+                    }
                 }
             }
         }
-    }
 
-    val mutex = Mutex()
-    ZipOutputStream(FileOutputStream("output.zip")).use { zipOutputStream ->
-        coroutineScope {
-            allDownloadedFiles
-                .onEach { (path, byteArray) ->
-                    println("File $path is downloaded")
-                    launch {
-                        mutex.withLock {
-                            zipOutputStream.putInZip(path, byteArray)
+        val mutex = Mutex()
+        ZipOutputStream(FileOutputStream("output.zip")).use { zipOutputStream ->
+            coroutineScope {
+                allDownloadedFiles
+                    .onEach { (path, byteArray) ->
+                        println("File $path is downloaded")
+                        launch {
+                            mutex.withLock {
+                                zipOutputStream.putInZip(path, byteArray)
+                            }
                         }
                     }
-                }
-                .flowOn(Dispatchers.IO)
-                .collect()
+                    .flowOn(Dispatchers.IO)
+                    .collect()
+            }
         }
     }
+    println("Completed in $time")
 }
 
 fun ZipOutputStream.putInZip(path: String, byteArray: ByteArray) {
