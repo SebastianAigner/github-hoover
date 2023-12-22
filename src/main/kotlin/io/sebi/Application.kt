@@ -1,7 +1,6 @@
 package io.sebi
 
 import io.ktor.http.*
-import io.ktor.resources.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -11,12 +10,11 @@ import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
-import io.ktor.server.resources.Resources
+import io.ktor.server.resources.*
 import io.ktor.server.response.*
-import io.sebi.plugins.*
+import io.sebi.plugins.configureZipEndpoint
 import kotlinx.html.body
 import kotlinx.html.h1
-import kotlinx.html.p
 import kotlinx.html.pre
 import org.slf4j.event.Level
 
@@ -31,7 +29,7 @@ fun Application.module() {
     }
     install(Resources)
     configureMonitoring()
-    configureRouting()
+    configureZipEndpoint()
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             call.respondHtml {

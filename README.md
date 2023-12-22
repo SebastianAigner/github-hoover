@@ -18,3 +18,20 @@
 - Put your GitHub token in a file called `key.local` in the root of this project
 - Run the main function from `Routing.kt`
 - Or use the webinterface: `http://0.0.0.0:8080/zip/repo?user=JetBrains&name=compose-multiplatform&branch=master&path=/`
+
+## TODO
+
+- [x] Traverse directories and collect all files from subdirectory
+- [x] Download all files (concurrently! ⚡️)
+- [x] Store them in ZIP file with correct permisisons! 🎱
+- [ ] Figure out why Detekt refuses to mark unused Sequences and Flows (non-terminal operators only) even when
+  the https://detekt.dev/docs/rules/potential-bugs#ignoredreturnvalue inspection is on by default
+- [ ] Write a blogpost about how Apache Commons Compress uses Octals to specify UNIX permissions
+- [ ] Contribute to Apache Commons Compress Documentation(?)
+- [ ] Wire up endpoint to serve actual ZIP file
+- [ ] Make sure ZIP file is stored in memory (rather than on disk)
+- [ ] Introduce allowlist for which repositories can be downloaded from
+- [ ] Introduce caching of generated ZIP files
+- [ ] Ensure that multiple requests for the same ZIP file don't cause parallel (re)generation
+- [ ] Provide diagnostic UI that shows which ZIP files are already cached
+- [ ] (Maybe) keep individual files in cache (keyed on their SHA, available from the GitHub API)
