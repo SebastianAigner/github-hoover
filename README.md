@@ -13,11 +13,52 @@
 - Preserve file permissions (e.g. `gradlew` will remain executable)
 - Support for branch names with slashes
 
-## How to use this
+## Installation
 
-- Put [your GitHub token](https://github.com/settings/tokens) in a file called `key.local` in the root of this project
-- Run the main function from `Routing.kt`
-- Or use the webinterface: `http://0.0.0.0:8080/zip/repo?user=JetBrains&name=compose-multiplatform&branch=master&path=/`
+1. Clone this repository to your machine:
+
+   ```shell
+   git clone https://github.com/SebastianAigner/github-hoover.git
+   ```
+
+2. Change into the project directory:
+
+   ```shell
+   cd github-hoover
+   ```
+
+3. Build the project using Gradle:
+
+   ```shell
+   ./gradlew build
+   ```
+
+4. Run the application:
+
+   ```shell
+   ./gradlew run
+   ```
+
+5. The API will be accessible at `http://0.0.0.0:8080`.
+
+## How to Use
+
+1. **Set Up GitHub Token:**
+  - Obtain a GitHub token from [here](https://github.com/settings/tokens).
+  - Put your GitHub token in a file named `key.local` located in the root of this project.
+2. **API Endpoints:**
+  - To interact with the API, send HTTP requests to the following endpoints:
+
+    - `GET /download-zip/{owner}/{repository}?branch={branch}&folder={folder}`
+      - Retrieves the zipped file of the GitHub folder you requested.
+      - Requires additional parameters:
+        - `branch`: Specify the branch of the repository.
+        - `folder`: Specify the folder within the repository.
+
+   Example:
+   ```http request
+   GET /download-zip/octocat/Hello-World?branch=main&folder=src
+   ```
 
 ## TODO
 
@@ -28,7 +69,7 @@
   the https://detekt.dev/docs/rules/potential-bugs#ignoredreturnvalue inspection is on by default
 - [ ] Write a blogpost about how Apache Commons Compress uses Octals to specify UNIX permissions
 - [ ] Contribute to Apache Commons Compress Documentation(?)
-- [ ] Wire up endpoint to serve actual ZIP file
+- [x] Wire up endpoint to serve actual ZIP file
 - [ ] Make sure ZIP file is stored in memory (rather than on disk)
 - [ ] Introduce allowlist for which repositories can be downloaded from
 - [ ] Introduce caching of generated ZIP files
