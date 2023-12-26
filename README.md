@@ -57,7 +57,7 @@
 
    Example:
    ```http request
-   GET /download-zip/octocat/Hello-World?branch=main&folder=src
+   GET /download-zip/repo?user=JetBrains&name=amper&branch=0.1&path=/examples/compose-ios
    ```
 
 ## TODO

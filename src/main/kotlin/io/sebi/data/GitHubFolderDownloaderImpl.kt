@@ -3,8 +3,8 @@ package io.sebi.data
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.domain.model.*
-import io.sebi.domain.repository.GitHubFolderDownloaderRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
@@ -19,19 +19,19 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class GitHubFolderDownloaderRepositoryImpl(
+class GitHubFolderDownloaderImpl(
     private val myClient: HttpClient
-): GitHubFolderDownloaderRepository {
+) : GitHubFolderDownloader {
 
     private val urlToFileListResponse = ConcurrentHashMap<String, FileListResponse>()
-    override suspend fun getFileListResponse(url: String): FileListResponse {
+    private suspend fun getFileListResponse(url: String): FileListResponse {
         return urlToFileListResponse.getOrPut(url) {
             println("Getting $url from network")
             myClient.get(url).body<FileListResponse>()
         }
     }
 
-    override suspend fun listFiles(repo: RepoPath): FileListResponse {
+    private suspend fun listFiles(repo: RepoPath): FileListResponse {
         val urlString = "https://api.github.com/repos/${repo.user}/${repo.name}/git/trees/${repo.branch}"
         val root = getFileListResponse(urlString)
         val directoryContents = repo.path.split("/")
@@ -44,14 +44,14 @@ class GitHubFolderDownloaderRepositoryImpl(
         return directoryContents
     }
 
-    override suspend fun downloadFile(url: String): ByteArray {
+    private suspend fun downloadFile(url: String): ByteArray {
         val file = myClient.get(url).body<SingleFile>()
         val b64string = file.content.replace("\n", "")
         // base64 decode string
         return Base64.getDecoder().decode(b64string)
     }
 
-    override fun listAllFiles(repo: RepoPath): Flow<PathWithUrlAndPermissions> {
+    private fun listAllFiles(repo: RepoPath): Flow<PathWithUrlAndPermissions> {
         return channelFlow {
             val sem = Semaphore(10)
             suspend fun walk(currDir: String) {
@@ -94,10 +94,12 @@ class GitHubFolderDownloaderRepositoryImpl(
     }
 
 
-    override suspend fun getDownloadedFiles(username: String,
-                                            repoName: String,
-                                            branch: String,
-                                            folderPath: String): Flow<PathAndFileContents> {
+    private suspend fun getDownloadedFiles(
+        username: String,
+        repoName: String,
+        branch: String,
+        folderPath: String
+    ): Flow<PathAndFileContents> {
         val allFiles = listAllFiles(
             RepoPath(username, repoName, branch, folderPath)
         )
@@ -106,6 +108,7 @@ class GitHubFolderDownloaderRepositoryImpl(
             allFiles.collect {
                 launch {
                     sem.withPermit<Unit> {
+                        println("Getting ${it.path} from ${it.url}")
                         this@channelFlow.send(PathAndFileContents(it.path, downloadFile(it.url), it.permissions))
                     }
                 }
@@ -113,11 +116,12 @@ class GitHubFolderDownloaderRepositoryImpl(
         }
     }
 
-    override suspend fun zipDownloadedFiles(pathName: String,
+    override suspend fun downloadFilesAsZip(
+        targetPath: String,
                                             username: String,
                                             repoName: String,
                                             branch: String, folderPath: String) {
-        ZipArchiveOutputStream(File(pathName)).use { zipOutputStream ->
+        ZipArchiveOutputStream(File(targetPath)).use { zipOutputStream ->
             coroutineScope {
                 getDownloadedFiles(username, repoName, branch, folderPath)
                     .onEach {

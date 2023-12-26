@@ -8,8 +8,8 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import io.sebi.common.Constant
-import io.sebi.data.GitHubFolderDownloaderRepositoryImpl
-import io.sebi.domain.repository.GitHubFolderDownloaderRepository
+import io.sebi.data.GitHubFolderDownloaderImpl
+import io.sebi.domain.downloader.GitHubFolderDownloader
 import org.koin.dsl.module
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -19,7 +19,6 @@ val koinModule = module {
 
     single {
         HttpClient(OkHttp) {
-
             // To accommodate machine with slower internet connections, increasing the timeout duration
             // can help prevent potential exceptions due to extended response times.
             engine {
@@ -30,7 +29,7 @@ val koinModule = module {
                 }
             }
 
-            install (ContentNegotiation) {
+            install(ContentNegotiation) {
                 json()
             }
             install(Logging) {
@@ -48,8 +47,8 @@ val koinModule = module {
         }
     }
 
-    single<GitHubFolderDownloaderRepository> {
-        GitHubFolderDownloaderRepositoryImpl(get())
+    single<GitHubFolderDownloader> {
+        GitHubFolderDownloaderImpl(get())
     }
 
 }

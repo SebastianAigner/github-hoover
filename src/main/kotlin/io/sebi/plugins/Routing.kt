@@ -6,7 +6,7 @@ import io.ktor.server.html.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.sebi.domain.repository.GitHubFolderDownloaderRepository
+import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.routes.downloadZipEndpoint
 import kotlinx.html.body
 import kotlinx.html.h1
@@ -15,7 +15,7 @@ import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
 
-    val repository: GitHubFolderDownloaderRepository by inject()
+    val repository: GitHubFolderDownloader by inject()
 
     routing {
 
