@@ -56,7 +56,7 @@
 2. **API Endpoints:**
   - To interact with the API, send HTTP requests to the following endpoints:
 
-    - `GET /download-zip/{owner}/{repository}?branch={branch}&folder={folder}`
+      - `GET /download-zip/repo?user=JetBrains&name=amper&branch=0.1&path=/examples/compose-ios`
       - Retrieves the zipped file of the GitHub folder you requested.
       - Requires additional parameters:
         - `branch`: Specify the branch of the repository.
