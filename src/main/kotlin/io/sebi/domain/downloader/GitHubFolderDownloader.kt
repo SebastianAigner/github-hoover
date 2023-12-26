@@ -1,12 +1,13 @@
 package io.sebi.domain.downloader
 
+import io.sebi.domain.model.RepoPath
+
 interface GitHubFolderDownloader {
 
     suspend fun downloadFilesAsZip(
-        username: String,
-        repoName: String,
-        branch: String,
-        folderPath: String
+        path: RepoPath
     ): ByteArray
+
+    suspend fun getSha(it: RepoPath): String
 
 }

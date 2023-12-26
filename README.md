@@ -72,15 +72,17 @@
 - [x] Traverse directories and collect all files from subdirectory
 - [x] Download all files (concurrently! ⚡️)
 - [x] Store them in ZIP file with correct permisisons! 🎱
-- [ ] Figure out why Detekt refuses to mark unused Sequences and Flows (non-terminal operators only) even when
-  the https://detekt.dev/docs/rules/potential-bugs#ignoredreturnvalue inspection is on by default
-- [ ] Write a blogpost about how Apache Commons Compress uses Octals to specify UNIX permissions
-- [ ] Contribute to Apache Commons Compress Documentation(?)
 - [x] Wire up endpoint to serve actual ZIP file
 - [x] Make sure ZIP file is created in memory (rather than on disk)
 - [ ] Explore if Ktor's typesafe routing allows us to specify nicer API endpoints?
 - [x] Introduce allowlist for which repositories can be downloaded from
-- [ ] Introduce caching of generated ZIP files
+- [x] Introduce caching of generated ZIP files
+- [ ] Make sure that caching both API requests AND ZIP files don't result in us never updating the caches when new
+  commits are available in the repo
 - [ ] Ensure that multiple requests for the same ZIP file don't cause parallel (re)generation
 - [ ] Provide diagnostic UI that shows which ZIP files are already cached
 - [ ] (Maybe) keep individual files in cache (keyed on their SHA, available from the GitHub API)
+- [ ] (Maybe) Figure out why Detekt refuses to mark unused Sequences and Flows (non-terminal operators only) even when
+  the https://detekt.dev/docs/rules/potential-bugs#ignoredreturnvalue inspection is on by default
+- [ ] (Maybe) Write a blogpost about how Apache Commons Compress uses Octals to specify UNIX permissions
+- [ ] (Maybe) Contribute to Apache Commons Compress Documentation(?)

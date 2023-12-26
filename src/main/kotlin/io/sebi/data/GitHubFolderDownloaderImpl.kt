@@ -116,12 +116,11 @@ class GitHubFolderDownloaderImpl(
         }
     }
 
-    override suspend fun downloadFilesAsZip(
-        username: String,
-        repoName: String,
-        branch: String,
-        folderPath: String
-    ): ByteArray {
+    override suspend fun downloadFilesAsZip(path: RepoPath): ByteArray {
+        val username = path.user
+        val repoName = path.name
+        val branch = path.branch
+        val folderPath = path.path
         val baos = ByteArrayOutputStream()
         ZipArchiveOutputStream(baos).use { zipOutputStream ->
             coroutineScope {
@@ -150,6 +149,10 @@ class GitHubFolderDownloaderImpl(
         putArchiveEntry(entry)
         write(byteArray)
         closeArchiveEntry()
+    }
+
+    override suspend fun getSha(it: RepoPath): String {
+        return listFiles(it).sha
     }
 
 }

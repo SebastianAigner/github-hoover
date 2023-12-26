@@ -8,6 +8,8 @@ import io.ktor.server.routing.*
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.domain.model.RepoPath
 import kotlinx.serialization.json.Json
+import java.lang.ref.SoftReference
+import java.util.concurrent.ConcurrentHashMap
 
 // Check via env variables
 val allowList = listOf(
@@ -33,7 +35,9 @@ private fun RepoPath.isAllowed(): Boolean {
     }
 }
 
-fun Route.downloadZipEndpoint(repository: GitHubFolderDownloader) {
+val zipCache = ConcurrentHashMap<String, SoftReference<ByteArray>>()
+
+fun Route.downloadZipEndpoint(downloader: GitHubFolderDownloader) {
 
     get("/defaultAllowlist") {
         call.respond(allowList)
@@ -43,7 +47,17 @@ fun Route.downloadZipEndpoint(repository: GitHubFolderDownloader) {
             if (!it.isAllowed()) return@get call.respondText(status = HttpStatusCode.Forbidden) {
                 "This instance is configured to only download allowlisted repositories and directories. Feel free to spin up your own instance of this service via https://github.com/SebastianAigner/github-hoover"
             }
-            val zipBytes = repository.downloadFilesAsZip(it.user, it.name, it.branch, it.path)
+            val sha = downloader.getSha(it)
+            val cached = zipCache[sha]?.get()
+            val zipBytes = if (cached != null) {
+                cached
+            } else {
+                val downloadedBytes = downloader.downloadFilesAsZip(it)
+                zipCache[sha] = SoftReference(downloadedBytes)
+                downloadedBytes
+            }
+
+
 
             call.response.header(
                 HttpHeaders.ContentDisposition,
