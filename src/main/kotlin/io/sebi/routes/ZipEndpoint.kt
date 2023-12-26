@@ -8,11 +8,32 @@ import io.ktor.server.routing.*
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.domain.model.RepoPath
 
+// Check via env variables
+val allowList = listOf(
+    RepoPath("SebastianAigner", "", "", ""),
+    RepoPath("JetBrains", "amper", "0.1", "examples"),
+    RepoPath("JetBrains", "compose-multiplatform", "", "examples/imageviewer"),
+    RepoPath("Kotlin", "kotlin-wasm-examples", "", "")
+)
+
+private fun RepoPath.isAllowed(): Boolean {
+    return allowList.any {
+        val userAllowed = it.user == this.user
+        val repoNameAllowed = if (it.name.isBlank()) true else it.name == this.name
+        val branchNameAllowed = if (it.branch.isBlank()) true else it.branch == this.branch
+        val pathAllowed =
+            if (it.path.isBlank()) true else this.path.removePrefix("/").startsWith(it.path.removePrefix("/"))
+        userAllowed && repoNameAllowed && branchNameAllowed && pathAllowed
+    }
+}
 
 fun Route.downloadZipEndpoint(repository: GitHubFolderDownloader) {
 
-    route("/download-zip"){
+    route("/download-zip") {
         get<RepoPath> {
+            if (!it.isAllowed()) return@get call.respondText(status = HttpStatusCode.Forbidden) {
+                "This instance is configured to only download allowlisted repositories and directories. Feel free to spin up your own instance of this service via https://github.com/SebastianAigner/github-hoover"
+            }
             val zipBytes = repository.downloadFilesAsZip(it.user, it.name, it.branch, it.path)
 
             call.response.header(
