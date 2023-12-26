@@ -3,12 +3,11 @@ package io.sebi.data
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.sebi.common.Constant
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.domain.model.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
@@ -24,16 +23,25 @@ class GitHubFolderDownloaderImpl(
 ) : GitHubFolderDownloader {
 
     private val urlToFileListResponse = ConcurrentHashMap<String, FileListResponse>()
+
+    private val cs = CoroutineScope(Dispatchers.Default)
     private suspend fun getFileListResponse(url: String): FileListResponse {
         return urlToFileListResponse.getOrPut(url) {
             println("Getting $url from network")
+            cs.launch {
+                delay(Constant.GITHUB_API_CACHING_LIFETIME)
+                urlToFileListResponse.remove(url)
+            }
             myClient.get(url).body<FileListResponse>()
         }
     }
 
+    private val RepoPath.url
+        get() =
+            "https://api.github.com/repos/${user}/${name}/git/trees/${branch}"
+
     private suspend fun listFiles(repo: RepoPath): FileListResponse {
-        val urlString = "https://api.github.com/repos/${repo.user}/${repo.name}/git/trees/${repo.branch}"
-        val root = getFileListResponse(urlString)
+        val root = getFileListResponse(repo.url)
         val directoryContents = repo.path.split("/")
             .filter { it.isNotBlank() }
             .fold(root) { directoryContents, s ->
@@ -50,6 +58,7 @@ class GitHubFolderDownloaderImpl(
         // base64 decode string
         return Base64.getDecoder().decode(b64string)
     }
+
 
     private fun listAllFiles(repo: RepoPath): Flow<PathWithUrlAndPermissions> {
         return channelFlow {
@@ -154,5 +163,4 @@ class GitHubFolderDownloaderImpl(
     override suspend fun getSha(it: RepoPath): String {
         return listFiles(it).sha
     }
-
 }

@@ -47,7 +47,7 @@
   - Obtain a GitHub token from [here](https://github.com/settings/tokens).
   - Put your GitHub token in a file named `key.local` located in the root of this project.
 
-2. **Set UP Allowlist**
+2. **Set Up Allowlist**
     - You can find a default allowlist by navigating to `http://localhost:8080/defaultAllowlist`.
     - Set the `HOOVER_ALLOWLIST` environment variable to the repositories for which you'd like to enable downloads.
     - If you'd like to allow all repositories under a given user or all paths under a given repository, leave those
@@ -77,8 +77,8 @@
 - [ ] Explore if Ktor's typesafe routing allows us to specify nicer API endpoints?
 - [x] Introduce allowlist for which repositories can be downloaded from
 - [x] Introduce caching of generated ZIP files
-- [ ] Make sure that caching both API requests AND ZIP files don't result in us never updating the caches when new
-  commits are available in the repo
+- [x] Make sure that caching both API requests AND ZIP files don't result in us never updating the caches when new
+  commits are available in the repo (fixed by evicting cache after time period)
 - [ ] Ensure that multiple requests for the same ZIP file don't cause parallel (re)generation
 - [ ] Provide diagnostic UI that shows which ZIP files are already cached
 - [ ] (Maybe) keep individual files in cache (keyed on their SHA, available from the GitHub API)
