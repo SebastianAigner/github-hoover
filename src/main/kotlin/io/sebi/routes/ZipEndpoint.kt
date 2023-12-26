@@ -7,6 +7,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.domain.model.RepoPath
+import kotlinx.serialization.json.Json
 
 // Check via env variables
 val allowList = listOf(
@@ -17,6 +18,11 @@ val allowList = listOf(
 )
 
 private fun RepoPath.isAllowed(): Boolean {
+    val allowListText = requireNotNull(System.getenv("HOOVER_ALLOWLIST")) {
+        "[HOOVER_ALLOWLIST] env variable is required"
+    }
+    val allowList = Json.decodeFromString<List<RepoPath>>(allowListText)
+
     return allowList.any {
         val userAllowed = it.user == this.user
         val repoNameAllowed = if (it.name.isBlank()) true else it.name == this.name
@@ -29,6 +35,9 @@ private fun RepoPath.isAllowed(): Boolean {
 
 fun Route.downloadZipEndpoint(repository: GitHubFolderDownloader) {
 
+    get("/defaultAllowlist") {
+        call.respond(allowList)
+    }
     route("/download-zip") {
         get<RepoPath> {
             if (!it.isAllowed()) return@get call.respondText(status = HttpStatusCode.Forbidden) {

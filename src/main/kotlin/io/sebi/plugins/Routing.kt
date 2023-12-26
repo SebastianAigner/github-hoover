@@ -4,7 +4,6 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.html.*
 import io.ktor.server.plugins.statuspages.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.routes.downloadZipEndpoint
@@ -25,7 +24,8 @@ fun Application.configureRouting() {
 
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            call.respondHtml {
+            cause.printStackTrace()
+            call.respondHtml(HttpStatusCode.InternalServerError) {
                 body {
                     h1 { +"500 Internal Server Error" }
                     cause.stackTraceToString().lines().forEach {
@@ -33,7 +33,6 @@ fun Application.configureRouting() {
                     }
                 }
             }
-            call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
         }
     }
 
