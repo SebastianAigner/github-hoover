@@ -7,35 +7,21 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.domain.model.RepoPath
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
 
 
 fun Route.downloadZipEndpoint(repository: GitHubFolderDownloader) {
 
     route("/download-zip"){
         get<RepoPath> {
-            val outputPath = getTempDirectoryPath().plus(File.pathSeparator).plus(getLastPartOfPath(it.path))
-            repository.downloadFilesAsZip(outputPath, it.user, it.name, it.branch, it.path)
+            val zipBytes = repository.downloadFilesAsZip(it.user, it.name, it.branch, it.path)
 
             call.response.header(
                 HttpHeaders.ContentDisposition,
                 ContentDisposition.Attachment
-                    .withParameter(ContentDisposition.Parameters.FileName, getLastPartOfPath(it.path))
+                    .withParameter(ContentDisposition.Parameters.FileName, it.path.substringAfterLast("/") + ".zip")
                     .toString()
             )
-            call.respondFile(File(outputPath))
-
+            call.respondBytes(zipBytes)
         }
     }
-}
-
-fun getTempDirectoryPath(): String {
-    return Files.createTempDirectory("zip").toAbsolutePath().toString()
-}
-
-fun getLastPartOfPath(path: String): String {
-    val normalizedPath = Paths.get(path).normalize()
-    return normalizedPath.fileName.toString().plus(".zip")
 }

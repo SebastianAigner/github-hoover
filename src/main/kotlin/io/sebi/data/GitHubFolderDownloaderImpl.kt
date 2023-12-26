@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
-import java.io.File
+import java.io.ByteArrayOutputStream
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -117,11 +117,13 @@ class GitHubFolderDownloaderImpl(
     }
 
     override suspend fun downloadFilesAsZip(
-        targetPath: String,
-                                            username: String,
-                                            repoName: String,
-                                            branch: String, folderPath: String) {
-        ZipArchiveOutputStream(File(targetPath)).use { zipOutputStream ->
+        username: String,
+        repoName: String,
+        branch: String,
+        folderPath: String
+    ): ByteArray {
+        val baos = ByteArrayOutputStream()
+        ZipArchiveOutputStream(baos).use { zipOutputStream ->
             coroutineScope {
                 getDownloadedFiles(username, repoName, branch, folderPath)
                     .onEach {
@@ -136,6 +138,7 @@ class GitHubFolderDownloaderImpl(
                     .collect()
             }
         }
+        return baos.toByteArray()
     }
 
     private fun ZipArchiveOutputStream.putInZip(path: String, byteArray: ByteArray, permissions: Int) {
