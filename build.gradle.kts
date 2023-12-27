@@ -8,12 +8,12 @@ plugins {
     kotlin("jvm") version "1.9.21"
     id("io.ktor.plugin") version "2.3.7"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21"
-    id("io.gitlab.arturbosch.detekt") version ("1.23.4")
+//    id("io.gitlab.arturbosch.detekt") version ("1.23.4")
 }
-
-detekt {
-    config.setFrom("detekt.yml")
-}
+//
+//detekt {
+//    config.setFrom("detekt.yml")
+//}
 
 group = "io.sebi"
 version = "0.0.1"
@@ -49,6 +49,6 @@ dependencies {
     implementation("io.ktor:ktor-server-html-builder:$ktorVersion")
     implementation("io.ktor:ktor-server-resources:$ktorVersion")
     implementation("org.apache.commons:commons-compress:1.25.0")
-
+    implementation("io.ktor:ktor-server-rate-limit:$ktorVersion")
     implementation("io.insert-koin:koin-ktor:$koinVersion")
 }

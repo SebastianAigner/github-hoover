@@ -37,7 +37,16 @@ val koinModule = module {
                 level = LogLevel.INFO
             }
             defaultRequest {
-                val token = File("key.local").readLines().first().trim()
+                val token = File("key.local")
+                    .takeIf {
+                        it.exists()
+                    }
+                    ?.readLines()
+                    ?.first()
+                    ?.trim()
+                    ?: System.getenv("GITHUB_TOKEN")
+                    ?: error("GITHUB_TOKEN not found")
+
 
                 headers {
                     set("Authorization", "Bearer $token")
