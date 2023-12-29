@@ -80,7 +80,7 @@
 - [x] Make sure that caching both API requests AND ZIP files don't result in us never updating the caches when new
   commits are available in the repo (fixed by evicting cache after time period)
 - [ ] Ensure that multiple requests for the same ZIP file don't cause parallel (re)generation
-- [ ] Provide diagnostic UI that shows which ZIP files are already cached
+- [ ] (Maybe) Provide diagnostic UI that shows which ZIP files are already cached
 - [ ] (Maybe) keep individual files in cache (keyed on their SHA, available from the GitHub API)
 - [ ] (Maybe) Figure out why Detekt refuses to mark unused Sequences and Flows (non-terminal operators only) even when
   the https://detekt.dev/docs/rules/potential-bugs#ignoredreturnvalue inspection is on by default
