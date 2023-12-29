@@ -74,7 +74,7 @@
 - [x] Store them in ZIP file with correct permisisons! 🎱
 - [x] Wire up endpoint to serve actual ZIP file
 - [x] Make sure ZIP file is created in memory (rather than on disk)
-- [ ] Explore if Ktor's typesafe routing allows us to specify nicer API endpoints?
+- [x] Explore if Ktor's typesafe routing allows us to specify nicer API endpoints?
 - [x] Introduce allowlist for which repositories can be downloaded from
 - [x] Introduce caching of generated ZIP files
 - [x] Make sure that caching both API requests AND ZIP files don't result in us never updating the caches when new
