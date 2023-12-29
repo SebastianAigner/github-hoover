@@ -54,18 +54,14 @@ fun Route.downloadZipEndpoint(downloader: GitHubFolderDownloader) {
             val sha = downloader.getSha(it)
             val zipBytes = zipCache[sha]?.get()
                 ?: gitHubApiRequestMutex.withLock {
-                    // double-check that someone else didn't download the file in the meantime
-                    val secondCached = zipCache[sha]?.get()
-                    if (secondCached != null) {
-                        secondCached
-                    } else {
+                    // someone else may have downloaded the file in the meantime
+                    zipCache[sha]?.get() ?: run {
+                        // it's our turn to download
                         val downloadedBytes = downloader.downloadFilesAsZip(it)
                         zipCache[sha] = SoftReference(downloadedBytes)
                         downloadedBytes
                     }
                 }
-
-
 
             call.response.header(
                 HttpHeaders.ContentDisposition,
