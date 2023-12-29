@@ -9,7 +9,6 @@ import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.routes.downloadZipEndpoint
 import kotlinx.html.body
 import kotlinx.html.h1
-import kotlinx.html.pre
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
@@ -28,9 +27,9 @@ fun Application.configureRouting() {
             call.respondHtml(HttpStatusCode.InternalServerError) {
                 body {
                     h1 { +"500 Internal Server Error" }
-                    cause.stackTraceToString().lines().forEach {
-                        pre { +it }
-                    }
+//                    cause.stackTraceToString().lines().forEach {
+//                        pre { +it }
+//                    }
                 }
             }
         }

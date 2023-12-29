@@ -7,6 +7,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.domain.model.RepoPath
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentHashMap
@@ -37,6 +39,8 @@ private fun RepoPath.isAllowed(): Boolean {
 
 val zipCache = ConcurrentHashMap<String, SoftReference<ByteArray>>()
 
+val gitHubApiRequestMutex = Mutex()
+
 fun Route.downloadZipEndpoint(downloader: GitHubFolderDownloader) {
 
     get("/defaultAllowlist") {
@@ -48,14 +52,18 @@ fun Route.downloadZipEndpoint(downloader: GitHubFolderDownloader) {
                 "This instance is configured to only download allowlisted repositories and directories. Feel free to spin up your own instance of this service via https://github.com/SebastianAigner/github-hoover"
             }
             val sha = downloader.getSha(it)
-            val cached = zipCache[sha]?.get()
-            val zipBytes = if (cached != null) {
-                cached
-            } else {
-                val downloadedBytes = downloader.downloadFilesAsZip(it)
-                zipCache[sha] = SoftReference(downloadedBytes)
-                downloadedBytes
-            }
+            val zipBytes = zipCache[sha]?.get()
+                ?: gitHubApiRequestMutex.withLock {
+                    // double-check that someone else didn't download the file in the meantime
+                    val secondCached = zipCache[sha]?.get()
+                    if (secondCached != null) {
+                        secondCached
+                    } else {
+                        val downloadedBytes = downloader.downloadFilesAsZip(it)
+                        zipCache[sha] = SoftReference(downloadedBytes)
+                        downloadedBytes
+                    }
+                }
 
 
 
