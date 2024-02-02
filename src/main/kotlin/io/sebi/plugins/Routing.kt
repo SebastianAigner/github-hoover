@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.html.*
 import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.sebi.domain.downloader.GitHubFolderDownloader
 import io.sebi.routes.downloadZipEndpoint
@@ -16,9 +17,10 @@ fun Application.configureRouting() {
     val repository: GitHubFolderDownloader by inject()
 
     routing {
-
+        get("/healthz") {
+            call.respondText("OK")
+        }
         downloadZipEndpoint(repository)
-
     }
 
     install(StatusPages) {
