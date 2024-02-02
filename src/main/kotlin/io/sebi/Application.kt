@@ -25,7 +25,7 @@ fun Application.module() {
     install(Resources)
     configureMonitoring()
     configureRouting()
-    log.info("Configured! :)")
+    log.info("Configured!")
 }
 
 private fun Application.configureRateLimit() {
