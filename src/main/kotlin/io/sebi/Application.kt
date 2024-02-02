@@ -18,12 +18,14 @@ fun main() {
 }
 
 fun Application.module() {
+    log.info("Starting up...")
     configureRateLimit()
     configureKoin()
     configureSerialization()
     install(Resources)
     configureMonitoring()
     configureRouting()
+    log.info("Configured!")
 }
 
 private fun Application.configureRateLimit() {
