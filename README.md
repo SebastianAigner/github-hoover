@@ -46,6 +46,7 @@
 1. **Set Up GitHub Token:**
   - Obtain a GitHub token from [here](https://github.com/settings/tokens).
   - Put your GitHub token in a file named `key.local` located in the root of this project.
+- For production, set the `GITHUB_TOKEN` environment variable to your token.
 
 2. **Set Up Allowlist**
     - You can find a default allowlist by navigating to `http://localhost:8080/defaultAllowlist`.
