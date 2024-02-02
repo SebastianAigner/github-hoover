@@ -18,7 +18,7 @@ fun main() {
 }
 
 fun Application.module() {
-    log.info("Starting up...")
+    log.info("Starting up... :)")
     configureRateLimit()
     configureKoin()
     configureSerialization()
