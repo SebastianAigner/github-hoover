@@ -1,4 +1,4 @@
-# Hoover: Download GitHub directories without checking out the whole repository
+# Hoover: Download GitHub directories without checking out the whole repository [![Better Stack Badge](https://uptime.betterstack.com/status-badges/v1/monitor/1psu1.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
 
 ## Motivation
 - Big repos sometimes have interesting bits in it (e.g. sample projects) that are independent of the larger project.
